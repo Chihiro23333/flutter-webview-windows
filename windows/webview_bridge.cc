@@ -25,6 +25,7 @@ constexpr auto kMethodAddScriptToExecuteOnDocumentCreated =
 constexpr auto kMethodRemoveScriptToExecuteOnDocumentCreated =
     "removeScriptToExecuteOnDocumentCreated";
 constexpr auto kMethodExecuteScript = "executeScript";
+constexpr auto kMethodGetCookies = "getCookies";
 constexpr auto kMethodPostWebMessage = "postWebMessage";
 constexpr auto kMethodSetSize = "setSize";
 constexpr auto kMethodSetCursorPos = "setCursorPos";
@@ -570,6 +571,26 @@ void WebviewBridge::HandleMethodCall(
               shared_result->Success(json_result);
             } else {
               shared_result->Error(kScriptFailed, "Executing script failed.");
+            }
+          });
+      return;
+    }
+    return result->Error(kErrorInvalidArgs);
+  }
+
+  // getCookies: string
+  if (method_name.compare(kMethodGetCookies) == 0) {
+    if (const auto url = std::get_if<std::string>(method_call.arguments())) {
+      std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>
+          shared_result = std::move(result);
+
+      webview_->GetCookies(
+          *url,
+          [shared_result](bool success, const std::string& cookies) {
+            if (success) {
+              shared_result->Success(cookies);
+            } else {
+              shared_result->Error(kScriptFailed, "getCookies failed.");
             }
           });
       return;

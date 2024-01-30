@@ -186,13 +186,41 @@ class _ExampleBrowser extends State<ExampleBrowser> {
         child: Icon(_isWebviewSuspended ? Icons.play_arrow : Icons.pause),
       ),
       appBar: AppBar(
-          title: StreamBuilder<String>(
-        stream: _controller.title,
-        builder: (context, snapshot) {
-          return Text(
-              snapshot.hasData ? snapshot.data! : 'WebView (Windows) Example');
-        },
-      )),
+        title: StreamBuilder<String>(
+          stream: _controller.title,
+          builder: (context, snapshot) {
+            return Text(snapshot.hasData
+                ? snapshot.data!
+                : 'WebView (Windows) Example');
+          },
+        ),
+        actions: [
+          MaterialButton(
+            onPressed: () async {
+              String cookiesResult =
+                  await _controller.getCookies(_textController.text);
+              await showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          ListTile(
+                            title: Text('cookiesResult:'),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+                            child: Text('$cookiesResult'),
+                          )
+                        ],
+                      ),
+                    );
+                  });
+            },
+            child: Icon(Icons.cookie),
+          )
+        ],
+      ),
       body: Center(
         child: compositeView(),
       ),

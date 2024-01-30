@@ -4,6 +4,7 @@
 
 #include <format>
 #include <iostream>
+#include <regex>
 
 #include "util/composition.desktop.interop.h"
 #include "util/string_converter.h"
@@ -698,6 +699,64 @@ void Webview::ExecuteScript(const std::string& script,
                   callback(SUCCEEDED(result),
                            util::Utf8FromUtf16(json_result_object));
                   return S_OK;
+                })
+                .Get()))) {
+      return;
+    }
+  }
+
+  callback(false, std::string());
+}
+
+void Webview::GetCookies(const std::string& url, GetCookiesCallback callback) {
+  if (IsValid()) {
+    auto webview2_2 = webview_.try_query<ICoreWebView2_2>();
+    ICoreWebView2CookieManager *cookie_manager;
+    webview2_2->get_CookieManager(&cookie_manager);
+    std::wstring uri = util::Utf16FromUtf8(url);
+    if (SUCCEEDED(cookie_manager->GetCookies(
+            uri.c_str(),
+            Callback<ICoreWebView2GetCookiesCompletedHandler>(
+                [callback, uri](HRESULT error_code,
+                                ICoreWebView2CookieList* list) -> HRESULT {
+                  if (SUCCEEDED(error_code)) {
+                    std::wstring result;
+                    UINT cookie_list_size;
+                    list->get_Count(&cookie_list_size);
+
+                    if (cookie_list_size == 0) {
+                      result += L"No cookies found.";
+                    } else {
+                      result += std::to_wstring(cookie_list_size) +
+                                L" cookie(s) found.";
+                      if (!uri.empty()) {
+                        result += L" on " + uri;
+                      }
+                      result += L"\n[";
+                      for (UINT i = 0; i < cookie_list_size; ++i) {
+                        wil::com_ptr<ICoreWebView2Cookie> cookie;
+                        list->GetValueAtIndex(i, &cookie);
+                        if (cookie.get())
+                        {
+                          LPWSTR name;
+                          LPWSTR value;
+                          cookie.get()->get_Name(&name);
+                          cookie.get()->get_Value(&value);
+                          result += name;
+                          result += L":";
+                          result += value;
+                          if (i != cookie_list_size - 1)
+                          {
+                            result += L";";
+                          }
+                        }
+                      }
+                      result += L"]";
+                    }
+                    callback(true, util::Utf8FromUtf16(result));
+                    return S_OK;
+                  }
+                  return S_FALSE;
                 })
                 .Get()))) {
       return;

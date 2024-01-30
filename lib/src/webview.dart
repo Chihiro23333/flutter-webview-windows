@@ -370,6 +370,21 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return jsonDecode(data as String);
   }
 
+  /// Gets a list of cookies matching the specific URI.
+  /// If uri is empty string or null, all cookies under the same profile are returned
+  ///
+  /// see https://docs.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2?view=webview2-1.0.1264.42#GetCookies
+  Future<dynamic> getCookies(String url) async{
+    if (_isDisposed) {
+      return;
+    }
+    assert(value.isInitialized);
+
+    final data = await _methodChannel.invokeMethod('getCookies', url);
+    if (data == null) return null;
+    return data.toString();
+  }
+
   /// Posts the given JSON-formatted message to the current document.
   Future<void> postWebMessage(String message) async {
     if (_isDisposed) {
