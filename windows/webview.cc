@@ -738,10 +738,14 @@ void Webview::GetCookies(const std::string& url, GetCookiesCallback callback) {
                         list->GetValueAtIndex(i, &cookie);
                         if (cookie.get())
                         {
+                          LPWSTR domain;
                           LPWSTR name;
                           LPWSTR value;
+                          cookie.get()->get_Domain(&domain);
                           cookie.get()->get_Name(&name);
                           cookie.get()->get_Value(&value);
+                          result += domain;
+                          result += L":";
                           result += name;
                           result += L":";
                           result += value;
